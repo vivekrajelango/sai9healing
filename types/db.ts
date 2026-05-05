@@ -25,6 +25,7 @@ export interface Session {
   rate: string
   amount_paid: string
   payment_note: string | null
+  teams_meeting_url: string | null
   amount_due: string
   balance: string
   created_at: string

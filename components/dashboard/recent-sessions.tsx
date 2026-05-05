@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Mail } from 'lucide-react'
 import { WhatsAppButton } from './whatsapp-button'
+import { TeamsLinkButton } from './teams-link-button'
 import { formatCurrency, formatDate } from '@/lib/format'
 import type { SessionWithRelations } from '@/types/db'
 
@@ -62,6 +63,7 @@ export function RecentSessions({ sessions }: Props) {
                             </a>
                           )}
                           <WhatsAppButton session={s} isPaid={isPaid} />
+                          <TeamsLinkButton session={s} />
                         </div>
                       </td>
                     </tr>

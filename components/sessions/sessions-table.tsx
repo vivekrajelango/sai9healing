@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Pencil, Trash2, CalendarPlus } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,7 +15,6 @@ import { Combobox } from '@/components/ui/combobox'
 import { InlinePaymentEdit } from './inline-payment-edit'
 import { SessionEditDialog } from './session-edit-dialog'
 import { deleteSession } from '@/actions/sessions'
-import { buildOutlookLink } from '@/lib/outlook-link'
 import { formatCurrency, formatDate } from '@/lib/format'
 import type { SessionWithRelations, Client, SessionType } from '@/types/db'
 
@@ -183,15 +182,6 @@ export function SessionsTable({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <a
-                          href={buildOutlookLink(s)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Schedule in Outlook"
-                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-[#0078D4] hover:bg-accent transition-colors"
-                        >
-                          <CalendarPlus className="h-3.5 w-3.5" />
-                        </a>
                         <Button
                           size="icon"
                           variant="ghost"

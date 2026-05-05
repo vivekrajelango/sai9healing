@@ -132,6 +132,28 @@ export async function deleteSession(id: string) {
   revalidatePath('/')
 }
 
+export async function saveTeamsMeetingUrl(sessionId: string, url: string) {
+  const insforge = createInsforgeServerClient()
+  const { error } = await insforge.database
+    .from('sessions')
+    .update({ teams_meeting_url: url })
+    .eq('id', sessionId)
+  if (error) throw new Error(error.message)
+  revalidatePath('/')
+  revalidatePath('/sessions')
+}
+
+export async function getSessionsWithMeetings(): Promise<SessionWithRelations[]> {
+  const insforge = createInsforgeServerClient()
+  const { data, error } = await insforge.database
+    .from('sessions')
+    .select('*, clients(id, name, contact, email), session_types(id, name)')
+    .not('teams_meeting_url', 'is', null)
+    .order('session_date', { ascending: true })
+  if (error) throw new Error(error.message)
+  return (data ?? []) as SessionWithRelations[]
+}
+
 export async function getDashboardStats() {
   const insforge = createInsforgeServerClient()
 
