@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 
 const links = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/sessions', label: 'Sessions', icon: Calendar },
   { href: '/clients', label: 'Clients', icon: Users },
+  { href: '/sessions', label: 'Sessions', icon: Calendar },
   { href: '/settings/session-types', label: 'Session Types', icon: Settings },
 ]
 

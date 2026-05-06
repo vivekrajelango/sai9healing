@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createInsforgeServerClient } from '@/lib/insforge-server'
-import type { SessionWithRelations } from '@/types/db'
+import type { SessionWithRelations, SessionPayment } from '@/types/db'
 
 export interface SessionFilters {
   month?: string      // 'YYYY-MM'
@@ -132,6 +132,71 @@ export async function deleteSession(id: string) {
   revalidatePath('/')
 }
 
+export async function getSessionPayments(sessionId: string): Promise<SessionPayment[]> {
+  const insforge = createInsforgeServerClient()
+  const { data, error } = await insforge.database
+    .from('session_payments')
+    .select('*')
+    .eq('session_id', sessionId)
+    .order('payment_date', { ascending: true })
+  if (error) throw new Error(error.message)
+  return (data ?? []) as SessionPayment[]
+}
+
+export async function addSessionPayment(
+  sessionId: string,
+  input: { payment_date: string; amount: number; note?: string }
+) {
+  const insforge = createInsforgeServerClient()
+  const { error: insertErr } = await insforge.database
+    .from('session_payments')
+    .insert([{ session_id: sessionId, ...input, note: input.note ?? null }])
+  if (insertErr) throw new Error(insertErr.message)
+
+  // Recalculate total paid from all payments
+  const { data, error: sumErr } = await insforge.database
+    .from('session_payments')
+    .select('amount')
+    .eq('session_id', sessionId)
+  if (sumErr) throw new Error(sumErr.message)
+  const total = (data ?? []).reduce((s, r) => s + parseFloat(r.amount ?? '0'), 0)
+
+  const { error: updateErr } = await insforge.database
+    .from('sessions')
+    .update({ amount_paid: total })
+    .eq('id', sessionId)
+  if (updateErr) throw new Error(updateErr.message)
+
+  revalidatePath('/sessions')
+  revalidatePath('/')
+}
+
+export async function deleteSessionPayment(paymentId: string, sessionId: string) {
+  const insforge = createInsforgeServerClient()
+  const { error: delErr } = await insforge.database
+    .from('session_payments')
+    .delete()
+    .eq('id', paymentId)
+  if (delErr) throw new Error(delErr.message)
+
+  // Recalculate total paid from remaining payments
+  const { data, error: sumErr } = await insforge.database
+    .from('session_payments')
+    .select('amount')
+    .eq('session_id', sessionId)
+  if (sumErr) throw new Error(sumErr.message)
+  const total = (data ?? []).reduce((s, r) => s + parseFloat(r.amount ?? '0'), 0)
+
+  const { error: updateErr } = await insforge.database
+    .from('sessions')
+    .update({ amount_paid: total })
+    .eq('id', sessionId)
+  if (updateErr) throw new Error(updateErr.message)
+
+  revalidatePath('/sessions')
+  revalidatePath('/')
+}
+
 export async function saveTeamsMeetingUrl(sessionId: string, url: string) {
   const insforge = createInsforgeServerClient()
   const { error } = await insforge.database
@@ -145,10 +210,12 @@ export async function saveTeamsMeetingUrl(sessionId: string, url: string) {
 
 export async function getSessionsWithMeetings(): Promise<SessionWithRelations[]> {
   const insforge = createInsforgeServerClient()
+  const today = new Date().toISOString().split('T')[0]
   const { data, error } = await insforge.database
     .from('sessions')
     .select('*, clients(id, name, contact, email), session_types(id, name)')
     .not('teams_meeting_url', 'is', null)
+    .gte('session_date', today)
     .order('session_date', { ascending: true })
   if (error) throw new Error(error.message)
   return (data ?? []) as SessionWithRelations[]

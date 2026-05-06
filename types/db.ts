@@ -36,6 +36,15 @@ export interface SessionWithRelations extends Session {
   session_types: Pick<SessionType, 'id' | 'name'>
 }
 
+export interface SessionPayment {
+  id: string
+  session_id: string
+  payment_date: string
+  amount: string
+  note: string | null
+  created_at: string
+}
+
 export interface ClientWithTotals {
   id: string
   name: string

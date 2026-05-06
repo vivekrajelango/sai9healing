@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +14,7 @@ import {
 import { Combobox } from '@/components/ui/combobox'
 import { InlinePaymentEdit } from './inline-payment-edit'
 import { SessionEditDialog } from './session-edit-dialog'
+import { SessionPaymentHistory } from './session-payment-history'
 import { deleteSession } from '@/actions/sessions'
 import { formatCurrency, formatDate } from '@/lib/format'
 import type { SessionWithRelations, Client, SessionType } from '@/types/db'
@@ -49,6 +50,11 @@ export function SessionsTable({
 }: Props) {
   const months = monthOptions()
   const [editingSession, setEditingSession] = React.useState<SessionWithRelations | null>(null)
+  const [expandedId, setExpandedId] = React.useState<string | null>(null)
+
+  function toggleRow(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id))
+  }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this session?')) return
@@ -150,57 +156,79 @@ export function SessionsTable({
               {sessions.map((s) => {
                 const balance = parseFloat(s.balance ?? '0')
                 const isPaid = balance <= 0
+                const isExpanded = expandedId === s.id
                 return (
-                  <tr
-                    key={s.id}
-                    className="border-b last:border-0 hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="px-4 py-3 whitespace-nowrap">{formatDate(s.session_date)}</td>
-                    <td className="px-4 py-3 font-medium">{s.clients?.name ?? '—'}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {s.session_types?.name ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right">{parseFloat(s.hours).toFixed(2)}</td>
-                    <td className="px-4 py-3 text-right">{formatCurrency(s.rate)}</td>
-                    <td className="px-4 py-3 text-right">{formatCurrency(s.amount_due)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <InlinePaymentEdit
-                        sessionId={s.id}
-                        amountPaid={s.amount_paid}
-                        amountDue={s.amount_due}
-                        paymentNote={s.payment_note}
-                        onSaved={onDataChanged}
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium">
-                      {formatCurrency(s.balance)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <Badge variant={isPaid ? 'success' : 'warning'}>
-                        {isPaid ? 'Paid' : 'Unpaid'}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => setEditingSession(s)}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDelete(s.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                  <React.Fragment key={s.id}>
+                    <tr
+                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => toggleRow(s.id)}
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="flex items-center gap-1.5">
+                          {isExpanded
+                            ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                          {formatDate(s.session_date)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-medium">{s.clients?.name ?? '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {s.session_types?.name ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right">{parseFloat(s.hours).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right">{formatCurrency(s.rate)}</td>
+                      <td className="px-4 py-3 text-right">{formatCurrency(s.amount_due)}</td>
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <InlinePaymentEdit
+                          sessionId={s.id}
+                          amountPaid={s.amount_paid}
+                          amountDue={s.amount_due}
+                          paymentNote={s.payment_note}
+                          onSaved={onDataChanged}
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium">
+                        {formatCurrency(s.balance)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Badge variant={isPaid ? 'success' : 'warning'}>
+                          {isPaid ? 'Paid' : 'Unpaid'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => setEditingSession(s)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDelete(s.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={10} className="p-0">
+                          <SessionPaymentHistory
+                            sessionId={s.id}
+                            amountDue={s.amount_due}
+                            onChanged={onDataChanged}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 )
               })}
             </tbody>
