@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Calendar, Users, Settings } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Settings, ClipboardList, BarChart2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const links = [
@@ -10,6 +10,8 @@ const links = [
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/sessions', label: 'Sessions', icon: Calendar },
   { href: '/settings/session-types', label: 'Session Types', icon: Settings },
+  { href: '/create-form', label: 'Create Form', icon: ClipboardList },
+  { href: '/form-status', label: 'Form Status', icon: BarChart2 },
 ]
 
 export function AppSidebar() {
